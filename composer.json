@@ -1,0 +1,25 @@
+{
+    "name": "sultanov-solutions/laravel-base",
+    "require": {
+        "php": "^8.0",
+        "laravel/framework": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "SultanovSolutions\\LaravelBase\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Jamal Sultanov",
+            "email": "cl.jamal@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SultanovSolutions\\LaravelBase\\SSBaseServiceProvider"
+            ]
+        }
+    }
+}
