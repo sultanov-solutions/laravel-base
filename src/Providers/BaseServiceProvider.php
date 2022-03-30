@@ -43,7 +43,8 @@ class BaseServiceProvider extends ServiceProvider
         }
     }
 
-    private function loadConfigs(){
+    private function loadConfigs()
+    {
 
         $config_files = collect(scandir($this->getCurrentDir('Configs')))
             ->filter(fn($r) => !in_array($r, ['.', '..']))
@@ -53,8 +54,8 @@ class BaseServiceProvider extends ServiceProvider
             $this->loadConfigPath($config_file);
     }
 
-    private function loadConfigPath($path, $is = false){
-
+    private function loadConfigPath($path, $is = false)
+    {
         if (is_dir($this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $path )))
         {
             $config_path = str($path)->trim()->toString();
@@ -68,11 +69,19 @@ class BaseServiceProvider extends ServiceProvider
         }else{
             $config_path = str($path)->trim()->toString();
 
-            config()
-                ->set(
-                    str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
-                    require $this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path )
-                );
+            if( $oldConfig = config(str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString()) ){
+                config()
+                    ->set(
+                        str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
+                        collect(require $this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path ))->merge($oldConfig)->toArray()
+                    );
+            }else{
+                config()
+                    ->set(
+                        str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
+                        require $this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path )
+                    );
+            }
         }
     }
 
@@ -85,7 +94,5 @@ class BaseServiceProvider extends ServiceProvider
     public function register()
     {
         $this->loadConfigs();
-
-//        dd(config());
     }
 }
