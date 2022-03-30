@@ -15,6 +15,7 @@ class BaseQueryFilter
 
     public function __construct(private Request $request, private Model $model, private string $scope)
     {
+        $this->builder = $this->model->newQuery();
     }
 
     public function updateRequest(Request $request): static
