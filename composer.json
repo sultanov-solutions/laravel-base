@@ -1,7 +1,6 @@
 {
     "name": "sultanov-solutions/laravel-base",
     "require": {
-        "php": "^8.0",
         "laravel/framework": "^9.0",
         "sultanov-solutions/coding-standard": "^1.0"
     },
