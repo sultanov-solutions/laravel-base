@@ -2,9 +2,9 @@
 
 namespace SultanovSolutions\LaravelBase;
 
-use Illuminate\Support\ServiceProvider;
+use SultanovSolutions\LaravelBase\Providers\BaseServiceProvider;
 
-class SSBaseServiceProvider extends ServiceProvider
+class SSBaseServiceProvider extends BaseServiceProvider
 {
     public function boot()
     {
