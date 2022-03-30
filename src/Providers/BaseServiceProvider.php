@@ -7,7 +7,6 @@ use Illuminate\Support\ServiceProvider;
 
 class BaseServiceProvider extends ServiceProvider
 {
-
     protected string $routes_dir = 'Routes';
 
     public function boot()
