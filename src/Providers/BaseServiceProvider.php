@@ -2,15 +2,23 @@
 
 namespace SultanovSolutions\LaravelBase\Providers;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class BaseServiceProvider extends ServiceProvider
 {
+
     protected string $routes_dir = 'Routes';
 
-    protected string $configs_dir = 'Configs/requests';
+    public function boot()
+    {
+        $this->loadRoutes();
+    }
+
+    public function register()
+    {
+        $this->loadConfigs();
+    }
 
     protected function getCurrentDir(string $dir = null): string
     {
@@ -54,7 +62,7 @@ class BaseServiceProvider extends ServiceProvider
             $this->loadConfigPath($config_file);
     }
 
-    private function loadConfigPath($path, $is = false)
+    private function loadConfigPath($path)
     {
         if (is_dir($this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $path )))
         {
@@ -83,16 +91,5 @@ class BaseServiceProvider extends ServiceProvider
                     );
             }
         }
-    }
-
-
-    public function boot()
-    {
-        $this->loadRoutes();
-    }
-
-    public function register()
-    {
-        $this->loadConfigs();
     }
 }
