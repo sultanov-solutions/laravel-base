@@ -3,7 +3,7 @@
     "require": {
         "php": "^8.0",
         "laravel/framework": "^9.0",
-        "sultanov-solutions/coding-standart": "dev-dev"
+        "sultanov-solutions/coding-standard": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -14,12 +14,6 @@
         {
             "name": "Jamal Sultanov",
             "email": "cl.jamal@gmail.com"
-        }
-    ],
-    "repositories": [
-        {
-            "type": "github",
-            "url": "https://github.com/SultanovSolutions/coding-standart.git"
         }
     ],
     "extra": {
