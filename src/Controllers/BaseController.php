@@ -117,11 +117,15 @@ abstract class BaseController extends LaravelBaseController
 
     /**
      * Default Get Single item interface
+     * @param Request $request
      * @param $id
      * @return JsonResponse
      */
-    public function read($id): JsonResponse
+    public function read(Request $request, $id): JsonResponse
     {
+        // Inject request modifications
+        $request = $this->beforeReadHook($request);
+
         $item = $this->model::find($id);
 
         if (!$item) {
@@ -129,6 +133,8 @@ abstract class BaseController extends LaravelBaseController
 
             return response()->json('Not found', ResponseAlias::HTTP_NOT_FOUND);
         }
+
+        $item = $this->afterReadHook($item);
 
         return response()->json($item);
     }

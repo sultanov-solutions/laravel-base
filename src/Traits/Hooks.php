@@ -47,6 +47,25 @@ trait Hooks
     }
 
     ##############################
+    # Read hooks
+    ##############################
+    /**
+     * Inject request modifications to READ interface
+     */
+    protected function beforeReadHook(Request $request): Request
+    {
+        return $request;
+    }
+
+    /**
+     * After READ item hook
+     */
+    protected function afterReadHook(Model $item): Model
+    {
+        return $item;
+    }
+
+    ##############################
     # Update hooks
     ##############################
     /**
