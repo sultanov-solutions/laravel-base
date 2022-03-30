@@ -2,6 +2,7 @@
 
 namespace SultanovSolutions\LaravelBase\Providers;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -11,9 +12,12 @@ class BaseServiceProvider extends ServiceProvider
 
     protected string $configs_dir = 'Configs/requests';
 
-    protected function getCurrentDir(): string
+    protected function getCurrentDir(string $dir = null): string
     {
-        return dirname((new \ReflectionClass(get_called_class()))->getFileName());
+        if (!$dir)
+            return dirname((new \ReflectionClass(get_called_class()))->getFileName());
+
+        return dirname((new \ReflectionClass(get_called_class()))->getFileName()) . DIRECTORY_SEPARATOR . $dir;
     }
 
     private function loadRoutes()
@@ -39,23 +43,39 @@ class BaseServiceProvider extends ServiceProvider
         }
     }
 
-    private function loadConfigs()
-    {
-        $CONFIG_DIR = $this->getCurrentDir() . '/' . $this->configs_dir;
+    private function loadConfigs(){
 
-        if (is_dir($CONFIG_DIR)) {
-            $config_files = collect(scandir($CONFIG_DIR))
-                ->filter(fn($r) => !in_array($r, ['.', '..']) && str($r)->endsWith('.php'))
+        $config_files = collect(scandir($this->getCurrentDir('Configs')))
+            ->filter(fn($r) => !in_array($r, ['.', '..']))
+            ->toArray();
+
+        foreach ($config_files as $config_file)
+            $this->loadConfigPath($config_file);
+    }
+
+    private function loadConfigPath($path, $is = false){
+
+        if (is_dir($this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $path )))
+        {
+            $config_path = str($path)->trim()->toString();
+
+            $config_files = collect(scandir($this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path)))
+                ->filter(fn($r) => !in_array($r, ['.', '..']))
                 ->toArray();
 
             foreach ($config_files as $config_file)
-                config()
-                    ->set(
-                        'requests.' . str($config_file)->remove('.php')->trim()->toString(),
-                        require_once $CONFIG_DIR . '/' . $config_file
-                    );
+                $this->loadConfigPath($config_path . DIRECTORY_SEPARATOR . $config_file, true );
+        }else{
+            $config_path = str($path)->trim()->toString();
+
+            config()
+                ->set(
+                    str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
+                    require $this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path )
+                );
         }
     }
+
 
     public function boot()
     {
@@ -65,5 +85,7 @@ class BaseServiceProvider extends ServiceProvider
     public function register()
     {
         $this->loadConfigs();
+
+//        dd(config());
     }
 }
