@@ -124,12 +124,12 @@ abstract class BaseController extends LaravelBaseController
     public function read(Request $request, $id): JsonResponse
     {
         // Inject request modifications
-        $request = $this->beforeReadHook($request);
+        $modified_id = $this->beforeReadHook($request, $id);
 
-        $item = $this->model::find($id);
+        $item = $this->model::find($modified_id);
 
         if (!$item) {
-            event('item-not-found.' . $this->scope, [$id]);
+            event('item-not-found.' . $this->scope, [$modified_id]);
 
             return response()->json('Not found', ResponseAlias::HTTP_NOT_FOUND);
         }
