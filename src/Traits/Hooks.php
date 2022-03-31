@@ -52,7 +52,7 @@ trait Hooks
     /**
      * Inject request modifications to READ interface
      */
-    protected function beforeReadHook(Request $request, mixed $id): Request
+    protected function beforeReadHook(Request $request, mixed $id): mixed
     {
         return $id;
     }
