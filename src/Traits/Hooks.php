@@ -3,7 +3,7 @@
 namespace SultanovSolutions\LaravelBase\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
-use SultanovSolutions\LaravelBase\Models\BaseModel as Model;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 trait Hooks
