@@ -29,7 +29,7 @@ class BaseServiceProvider extends ServiceProvider
 
     private function loadRoutes()
     {
-        $ROUTES_DIR = $this->getCurrentDir() . '/' . $this->routes_dir;
+        $ROUTES_DIR = $this->getCurrentDir('/' . $this->routes_dir);
 
         if (is_dir($ROUTES_DIR)) {
             $routes = collect(scandir($ROUTES_DIR))
@@ -52,13 +52,14 @@ class BaseServiceProvider extends ServiceProvider
 
     private function loadConfigs()
     {
+        if (is_dir($this->getCurrentDir('Configs'))) {
+            $config_files = collect(scandir($this->getCurrentDir('Configs')))
+                ->filter(fn($r) => !in_array($r, ['.', '..']))
+                ->toArray();
 
-        $config_files = collect(scandir($this->getCurrentDir('Configs')))
-            ->filter(fn($r) => !in_array($r, ['.', '..']))
-            ->toArray();
-
-        foreach ($config_files as $config_file)
-            $this->loadConfigPath($config_file);
+            foreach ($config_files as $config_file)
+                $this->loadConfigPath($config_file);
+        }
     }
 
     private function loadConfigPath($path)
