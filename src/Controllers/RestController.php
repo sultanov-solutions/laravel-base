@@ -24,7 +24,7 @@ abstract class RestController extends LaravelBaseController
      * Main Endpoint
      * @var string|null
      */
-    public ?string $endpoint;
+    protected ?string $endpoint;
 
     /**
      * @var HttpService|null
