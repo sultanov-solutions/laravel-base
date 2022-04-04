@@ -31,9 +31,16 @@ abstract class RestController extends LaravelBaseController
      */
     private ?HttpService $httpService;
 
+    protected function custom_construct(){
+
+    }
+
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
+
+            $this->custom_construct();
+
             $this->httpService = new HttpService($request);
 
             if ($this->endpoint)
