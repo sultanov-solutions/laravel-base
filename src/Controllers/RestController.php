@@ -13,11 +13,18 @@ use Illuminate\Routing\Controller as LaravelBaseController;
 abstract class RestController extends LaravelBaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
     /**
-     * Main Endpoint, also used as Scope
+     * Main Scope
      * @var string|null
      */
-    protected ?string $endpoint;
+    protected ?string $scope;
+
+    /**
+     * Main Endpoint
+     * @var string|null
+     */
+    public ?string $endpoint;
 
     /**
      * @var HttpService|null
@@ -28,7 +35,10 @@ abstract class RestController extends LaravelBaseController
     {
         $this->middleware(function ($request, $next) {
             $this->httpService = new HttpService($request);
-            //$this->httpService->setBaseUrl('my-api');
+
+            if ($this->endpoint)
+                $this->httpService->setBaseUrl($this->endpoint);
+
             return $next($request);
         });
     }
@@ -42,7 +52,7 @@ abstract class RestController extends LaravelBaseController
      */
     public function all(): JsonResponse
     {
-        $response = $this->httpService->requestHttp->get($this->endpoint . '/all');
+        $response = $this->httpService->requestHttp->get($this->scope . '/all');
 
         return $this->httpService->jsonResponse(
             $response,
@@ -57,7 +67,7 @@ abstract class RestController extends LaravelBaseController
      */
     public function list(Request $request): JsonResponse
     {
-        $requestResponse = $this->httpService->requestHttp->get($this->endpoint, $request->query->all());
+        $requestResponse = $this->httpService->requestHttp->get($this->scope, $request->query->all());
         return $this->httpService->hydratePaginationResponse($requestResponse);
     }
 
@@ -68,7 +78,7 @@ abstract class RestController extends LaravelBaseController
      */
     public function read($userId): JsonResponse
     {
-        $response = $this->httpService->requestHttp->get($this->endpoint . '/' . $userId);
+        $response = $this->httpService->requestHttp->get($this->scope . '/' . $userId);
 
         return $this->httpService->jsonResponse(
             $response,
@@ -83,7 +93,7 @@ abstract class RestController extends LaravelBaseController
      */
     public function create(Request $request): JsonResponse
     {
-        $response = $this->httpService->requestHttp->post($this->endpoint, $request);
+        $response = $this->httpService->requestHttp->post($this->scope, $request);
 
         return $this->httpService->jsonResponse(
             $response,
@@ -98,7 +108,7 @@ abstract class RestController extends LaravelBaseController
      */
     public function update(Request $request): JsonResponse
     {
-        $response = $this->httpService->requestHttp->put($this->endpoint, $request);
+        $response = $this->httpService->requestHttp->put($this->scope, $request);
 
         return $this->httpService->jsonResponse(
             $response,
@@ -114,7 +124,7 @@ abstract class RestController extends LaravelBaseController
      */
     public function destroy(Request $request): JsonResponse
     {
-        $response = $this->httpService->requestHttp->delete($this->endpoint, $request);
+        $response = $this->httpService->requestHttp->delete($this->scope, $request);
 
         return $this->httpService->jsonResponse(
             $response,
