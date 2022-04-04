@@ -14,8 +14,11 @@ class HttpService
 
     private string $baseUrl = '/api';
 
-    public function __construct(Request $request)
+    public function __construct(Request $request, string $endpoint)
     {
+        if ($endpoint && !empty($endpoint))
+            $this->setBaseUrl($endpoint);
+
         $this->requestHttp = Http::withToken($request->bearerToken())->baseUrl( $this->getBaseUrl() );
     }
 
