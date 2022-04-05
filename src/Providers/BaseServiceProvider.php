@@ -2,12 +2,27 @@
 
 namespace SultanovSolutions\LaravelBase\Providers;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class BaseServiceProvider extends ServiceProvider
 {
-    protected string $routes_dir = 'Routes';
+    protected ?string $configs_dir = 'Configs';
+
+    protected ?string $routes_dir = 'Routes';
+
+    protected ?string $vendor_dir = '';
+
+    public function __construct($app)
+    {
+        parent::__construct($app);
+        $this->custom_construct();
+    }
+
+    public function custom_construct(): void
+    {
+    }
 
     public function boot()
     {
@@ -21,10 +36,26 @@ class BaseServiceProvider extends ServiceProvider
 
     protected function getCurrentDir(string $dir = null): string
     {
-        if (!$dir)
-            return dirname((new \ReflectionClass(get_called_class()))->getFileName());
+        $root_dir = dirname((new \ReflectionClass(get_called_class()))->getFileName());
 
-        return dirname((new \ReflectionClass(get_called_class()))->getFileName()) . DIRECTORY_SEPARATOR . $dir;
+
+        if ($this->vendor_dir) {
+            if (
+                is_dir(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir)) &&
+                is_file(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . 'composer.json'))
+            ) {
+                $composer_json = json_decode(File::get(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . 'composer.json')), 1);
+                $project_folder = array_pop($composer_json['autoload']['psr-4']);
+
+                if (is_dir(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . $project_folder)))
+                    $root_dir = base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . $project_folder);
+            }
+        }
+
+        if (!$dir)
+            return $root_dir;
+
+        return $root_dir . DIRECTORY_SEPARATOR . $dir;
     }
 
     private function loadRoutes()
@@ -52,8 +83,8 @@ class BaseServiceProvider extends ServiceProvider
 
     private function loadConfigs()
     {
-        if (is_dir($this->getCurrentDir('Configs'))) {
-            $config_files = collect(scandir($this->getCurrentDir('Configs')))
+        if (is_dir($this->getCurrentDir($this->configs_dir))) {
+            $config_files = collect(scandir($this->getCurrentDir($this->configs_dir)))
                 ->filter(fn($r) => !in_array($r, ['.', '..']))
                 ->toArray();
 
@@ -64,30 +95,29 @@ class BaseServiceProvider extends ServiceProvider
 
     private function loadConfigPath($path)
     {
-        if (is_dir($this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $path )))
-        {
+        if (is_dir($this->getCurrentDir($this->configs_dir . DIRECTORY_SEPARATOR . $path))) {
             $config_path = str($path)->trim()->toString();
 
-            $config_files = collect(scandir($this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path)))
+            $config_files = collect(scandir($this->getCurrentDir($this->configs_dir . DIRECTORY_SEPARATOR . $config_path)))
                 ->filter(fn($r) => !in_array($r, ['.', '..']))
                 ->toArray();
 
             foreach ($config_files as $config_file)
-                $this->loadConfigPath($config_path . DIRECTORY_SEPARATOR . $config_file, true );
-        }else{
+                $this->loadConfigPath($config_path . DIRECTORY_SEPARATOR . $config_file, true);
+        } else {
             $config_path = str($path)->trim()->toString();
 
-            if( $oldConfig = config(str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString()) ){
+            if ($oldConfig = config(str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString())) {
                 config()
                     ->set(
                         str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
-                        collect(require $this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path ))->merge($oldConfig)->toArray()
+                        collect(require $this->getCurrentDir($this->configs_dir . DIRECTORY_SEPARATOR . $config_path))->merge($oldConfig)->toArray()
                     );
-            }else{
+            } else {
                 config()
                     ->set(
                         str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
-                        require $this->getCurrentDir('Configs' . DIRECTORY_SEPARATOR . $config_path )
+                        require $this->getCurrentDir($this->configs_dir . DIRECTORY_SEPARATOR . $config_path)
                     );
             }
         }
