@@ -24,7 +24,10 @@ abstract class BaseController extends LaravelBaseController
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $this->queryFilter = new BaseQueryFilter($request, new $this->model, $this->scope);
+
+            if ($this->model)
+                $this->queryFilter = new BaseQueryFilter($request, new $this->model, $this->scope);
+
             return $next($request);
         });
     }
@@ -39,7 +42,7 @@ abstract class BaseController extends LaravelBaseController
      * Default class model
      * @var string|null
      */
-    protected mixed $model;
+    protected ?string $model;
 
     /**
      * Default get paginated list interface
