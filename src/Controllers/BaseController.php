@@ -42,7 +42,7 @@ abstract class BaseController extends LaravelBaseController
      * Default class model
      * @var string|null
      */
-    protected ?string $model;
+    protected ?string $model = null;
 
     /**
      * Default get paginated list interface
