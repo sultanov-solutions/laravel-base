@@ -29,7 +29,7 @@ abstract class RestController extends LaravelBaseController
     /**
      * @var HttpService|null
      */
-    private ?HttpService $httpService;
+    protected ?HttpService $httpService;
 
     protected function custom_construct(){
 
