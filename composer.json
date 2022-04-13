@@ -1,6 +1,6 @@
 {
     "name": "sultanov-solutions/laravel-base",
-    "version": "v1.0.32",
+    "version": "v1.0.34",
     "require": {
         "laravel/framework": "^9.0",
         "sultanov-solutions/coding-standard": "^1.0"
