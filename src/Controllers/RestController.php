@@ -77,18 +77,12 @@ abstract class RestController extends LaravelBaseController
 
     /**
      * Main read interface
-     * @param $id
+     * @param $userId
      * @return JsonResponse
      */
-    public function read($id): JsonResponse
+    public function read($userId): JsonResponse
     {
-        $response = $this->httpService->requestHttp->get($this->scope . '/' . $id);
-
-        if ($response->status() !== 200)
-            return $this->httpService->jsonResponse(
-                $response->body(),
-                $response->status()
-            );
+        $response = $this->httpService->requestHttp->get($this->scope . '/' . $userId);
 
         return $this->httpService->jsonResponse(
             $response,
