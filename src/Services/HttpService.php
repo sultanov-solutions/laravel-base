@@ -45,7 +45,7 @@ class HttpService
         if ($response->status() === 200)
             return response()->json($response->json());
 
-        return response()->json($response->json(), $fail_status);
+        return response()->json($response->body(), $fail_status);
     }
 
     public function setBaseUrl(string $baseUrl): static
