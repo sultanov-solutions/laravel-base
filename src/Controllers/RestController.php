@@ -64,6 +64,16 @@ abstract class RestController extends LaravelBaseController
         );
     }
 
+    public function remoteSearch(string $query): JsonResponse
+    {
+        $response = $this->httpService->requestHttp->get( $this->scope . '/remote-search/' . $query );
+
+        return $this->httpService->jsonResponse(
+            $response,
+            $response->status()
+        );
+    }
+
     /**
      * Main paginated list interface
      * @param Request $request
