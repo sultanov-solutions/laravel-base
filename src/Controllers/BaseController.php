@@ -45,6 +45,12 @@ abstract class BaseController extends LaravelBaseController
     protected ?string $model = null;
 
     /**
+     * Remote search key
+     * @var string
+     */
+    protected string $remoteSearchKey = 'name';
+
+    /**
      * Default get paginated list interface
      * @param Request $request
      * @return JsonResponse
@@ -72,6 +78,16 @@ abstract class BaseController extends LaravelBaseController
     public function all(): JsonResponse
     {
         return response()->json($this->model::all()->pluck('name', 'id'));
+    }
+
+    public function remoteSearch(string $query): JsonResponse
+    {
+        if ($query)
+            return response()->json(
+                $this->model::where($this->remoteSearchKey, 'like', '%' . $query . '%')->pluck('name', 'id')
+            );
+
+        return response()->json(['status' => false], ResponseAlias::HTTP_BAD_REQUEST);
     }
 
     /**
