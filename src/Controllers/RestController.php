@@ -74,6 +74,17 @@ abstract class RestController extends LaravelBaseController
         );
     }
 
+
+    public function findBy(Request $request): JsonResponse
+    {
+        $response = $this->httpService->requestHttp->get( $this->scope . '/findBy/', $request->query->all() );
+
+        return $this->httpService->jsonResponse(
+            $response,
+            $response->status()
+        );
+    }
+
     /**
      * Main paginated list interface
      * @param Request $request

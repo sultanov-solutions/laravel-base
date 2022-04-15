@@ -90,6 +90,39 @@ abstract class BaseController extends LaravelBaseController
         return response()->json(['status' => false], ResponseAlias::HTTP_BAD_REQUEST);
     }
 
+
+    public function findBy(Request $request): JsonResponse
+    {
+        $builder = $this->model::query();
+
+        $keys = [];
+
+        if (count($request->all())){
+            foreach ($request->all() as $key => $value)
+                if (!empty(trim($value)) && $key !== 'cols')
+                    $keys[$key] = explode(',', $value);
+        }
+
+        if (count($keys))
+        {
+            foreach ($keys as $key => $val)
+                $builder->whereIn($key, $val);
+
+            $cols = [...array_keys($keys), 'id'];
+
+            if ($request->has('cols'))
+                $cols = explode(',', $request->cols);
+
+
+            return response()->json(
+                $builder->select($cols)->get()
+            );
+        }
+
+
+        return response()->json(['status' => false], ResponseAlias::HTTP_BAD_REQUEST);
+    }
+
     /**
      * Default Create item interface
      * @param Request $request
