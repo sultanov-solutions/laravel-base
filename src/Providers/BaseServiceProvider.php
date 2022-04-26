@@ -28,6 +28,7 @@ class BaseServiceProvider extends ServiceProvider
     {
         $this->loadRoutes();
         $this->loadMigrations();
+        $this->loadSeeders();
     }
 
     public function register()
@@ -124,18 +125,32 @@ class BaseServiceProvider extends ServiceProvider
         }
     }
 
-    private function loadMigrations()
-    {
-        $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
-        $package_name = str($composer_json['name'])->replace('/', '-')->slug()->toString();
+    private function publishFiles(string $path, string $target_dir){
+        if ($path){
+            $path_key = str($path)->replace('/', '-')->slug();
 
-        if ($this->app->runningInConsole()) {
-            if (is_dir($this->getCurrentDir('Database/migrations'))){
-                $migrationsFiles = collect(scandir($this->getCurrentDir('Database/migrations')))->filter(fn($f) => !in_array($f, ['.', '..']))->toArray();
+            $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
+            $package_name = str($composer_json['name'])->replace('/', '-')->slug()->toString();
 
-                if (is_array($migrationsFiles) && count($migrationsFiles) )
-                    $this->publishes([__DIR__.'/Database/migrations' => database_path('migrations')], $package_name);
+            if ($this->app->runningInConsole()) {
+                if (is_dir($this->getCurrentDir('Database/' . $path))){
+                    $migrationsFiles = collect(scandir($this->getCurrentDir('Database/' . $path)))->filter(fn($f) => !in_array($f, ['.', '..']))->toArray();
+
+                    if (is_array($migrationsFiles) && count($migrationsFiles) )
+                        $this->publishes([$this->getCurrentDir('Database/' . $path) => $target_dir], $package_name . '-' . $path_key);
+                }
             }
         }
+
+    }
+
+    private function loadMigrations()
+    {
+        $this->publishFiles('migrations', database_path('migrations'));
+    }
+
+    private function loadSeeders()
+    {
+        $this->publishFiles('seeders', database_path('seeders'));
     }
 }
