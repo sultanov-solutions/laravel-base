@@ -27,6 +27,7 @@ class BaseServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->loadRoutes();
+        $this->loadMigrations();
     }
 
     public function register()
@@ -119,6 +120,21 @@ class BaseServiceProvider extends ServiceProvider
                         str($config_path)->remove('.php')->replace(DIRECTORY_SEPARATOR, '.')->toString(),
                         require $this->getCurrentDir($this->configs_dir . DIRECTORY_SEPARATOR . $config_path)
                     );
+            }
+        }
+    }
+
+    private function loadMigrations()
+    {
+        $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
+        $package_name = str($composer_json['name'])->replace('/', '-')->slug()->toString();
+
+        if ($this->app->runningInConsole()) {
+            if (is_dir($this->getCurrentDir('Database/migrations'))){
+                $migrationsFiles = collect(scandir($this->getCurrentDir('Database/migrations')))->filter(fn($f) => !in_array($f, ['.', '..']))->toArray();
+
+                if (is_array($migrationsFiles) && count($migrationsFiles) )
+                    $this->publishes([__DIR__.'/Database/migrations' => database_path('migrations')], $package_name);
             }
         }
     }
