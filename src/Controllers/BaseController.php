@@ -21,7 +21,7 @@ abstract class BaseController extends LaravelBaseController
 
     protected string $scope;
 
-    protected array $di;
+    protected array $di = [];
 
     public function __construct()
     {
