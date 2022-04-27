@@ -21,12 +21,19 @@ abstract class BaseController extends LaravelBaseController
 
     protected string $scope;
 
+    protected array $di;
+
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
 
             if ($this->model)
                 $this->queryFilter = new BaseQueryFilter($request, new $this->model, $this->scope);
+
+            if (is_array($this->di) && count($this->di) ){
+                foreach ($this->di as $d_key => $d_class)
+                    $this->{$d_key} = app()->make($d_class);
+            }
 
             return $next($request);
         });
