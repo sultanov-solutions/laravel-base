@@ -82,8 +82,13 @@ abstract class BaseController extends LaravelBaseController
      * Default Get All interface
      * @return JsonResponse
      */
-    public function all(): JsonResponse
+    public function all(Request $request): JsonResponse
     {
+		if ($request->has('with-cols')){
+			$cols = explode(',', $request->get('with-cols'));
+			return response()->json($this->model::select($cols)->get());
+		}
+
         return response()->json($this->model::all()->pluck('name', 'id'));
     }
 
@@ -158,7 +163,7 @@ abstract class BaseController extends LaravelBaseController
         } catch (\Exception $exception) {
             if (str($exception->getMessage())->contains('Duplicate entry'))
                 return response()->json(['status' => false, 'message' => 'Duplicate entry'], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
-        }
+		}
 
         if (!$item) {
             event('item-not-created.' . $this->scope, [$data]);
