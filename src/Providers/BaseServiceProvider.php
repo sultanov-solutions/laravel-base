@@ -2,6 +2,7 @@
 
 namespace SultanovSolutions\LaravelBase\Providers;
 
+use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -13,6 +14,8 @@ class BaseServiceProvider extends ServiceProvider
     protected ?string $routes_dir = 'Routes';
 
     protected ?string $vendor_dir = '';
+
+    protected bool $envExist = false;
 
     public function __construct($app)
     {
@@ -29,6 +32,7 @@ class BaseServiceProvider extends ServiceProvider
         $this->loadRoutes();
         $this->loadMigrations();
         $this->loadSeeders();
+        $this->onLoad();
     }
 
     public function register()
@@ -152,5 +156,33 @@ class BaseServiceProvider extends ServiceProvider
     private function loadSeeders()
     {
         $this->publishFiles('seeders', database_path('seeders'));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function env($key, $default = null): string
+    {
+        if ($this->envExist)
+        {
+            return cache()->remember('config-'.$key, now()->addMinutes(20), function () use ($key, $default){
+                $env_str = str(File::get($this->getCurrentDir('../.env')));
+
+                if ($env_str->contains($key))
+                    $val = collect($env_str->explode("\r"))->filter(fn($val) => str(str($val)->explode('=')[0])->trim()->toString() === $key)->first();
+
+                if ($val)
+                    return str($val)->trim()->after('=')->trim()->toString();
+
+                return $default;
+            });
+        }
+
+        throw new Exception('Env file not found');
+    }
+
+    public function onLoad(): void
+    {
+
     }
 }
