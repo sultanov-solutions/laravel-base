@@ -3,6 +3,7 @@
 namespace SultanovSolutions\LaravelBase\Providers;
 
 use Exception;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -161,7 +162,7 @@ class BaseServiceProvider extends ServiceProvider
     /**
      * @throws Exception
      */
-    public function env($key, $default = null): string
+    public function env($key, $default = null): ?string
     {
         if ($this->envExist)
         {
@@ -178,11 +179,13 @@ class BaseServiceProvider extends ServiceProvider
             });
         }
 
-        throw new Exception('Env file not found');
+        if(!App::runningInConsole())
+            throw new Exception('Env file not found');
+
+        return null;
     }
 
     public function onLoad(): void
     {
-
     }
 }
