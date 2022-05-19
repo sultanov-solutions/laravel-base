@@ -21,6 +21,10 @@ class BaseServiceProvider extends ServiceProvider
     public function __construct($app)
     {
         parent::__construct($app);
+
+        if (file_exists($this->getCurrentDir('../.env')))
+            $this->envExist = true;
+
         $this->custom_construct();
     }
 
