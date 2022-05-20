@@ -173,25 +173,32 @@ class BaseServiceProvider extends ServiceProvider
     {
         if ($this->envExist)
         {
-            return cache()->remember('config-'.$key, now()->addMinutes($this->envCacheTime), function () use ($key, $default){
-                $env_str = str(File::get($this->getCurrentDir('../.env')));
+            if ($this->envCacheTime !== 0){
+                return cache()->remember('config-'.$key, now()->addMinutes($this->envCacheTime), function () use ($key, $default){
+                    return $this->getEnvValue($key, $default);
+                });
+            }else{
+                return $this->getEnvValue($key, $default);
+            }
 
-                $val = null;
-
-                if ($env_str->contains($key))
-                    $val = collect($env_str->explode("\r"))->filter(fn($val) => str(str($val)->explode('=')[0])->trim()->toString() === $key)->first();
-
-                if ($val)
-                    return str($val)->trim()->after('=')->trim()->toString();
-
-                return $default;
-            });
         }
 
-        if(!App::runningInConsole())
-            throw new Exception('Env file not found');
-
         return null;
+    }
+
+    private function getEnvValue($key, $default = null): ?string
+    {
+        $env_str = str(File::get($this->getCurrentDir('../.env')));
+
+        $val = null;
+
+        if ($env_str->contains($key))
+            $val = collect($env_str->explode("\r"))->filter(fn($val) => str(str($val)->explode('=')[0])->trim()->toString() === $key)->first();
+
+        if ($val)
+            return str($val)->trim()->after('=')->trim()->toString();
+
+        return $default;
     }
 
     public function onBoot(): void
