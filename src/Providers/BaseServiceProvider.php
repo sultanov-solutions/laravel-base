@@ -37,12 +37,13 @@ class BaseServiceProvider extends ServiceProvider
         $this->loadRoutes();
         $this->loadMigrations();
         $this->loadSeeders();
-        $this->onLoad();
+        $this->onBoot();
     }
 
     public function register()
     {
         $this->loadConfigs();
+        $this->onRegister();
     }
 
     protected function getCurrentDir(string $dir = null): string
@@ -189,7 +190,11 @@ class BaseServiceProvider extends ServiceProvider
         return null;
     }
 
-    public function onLoad(): void
+    public function onBoot(): void
+    {
+    }
+
+    public function onRegister(): void
     {
     }
 }
