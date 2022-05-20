@@ -193,7 +193,7 @@ class BaseServiceProvider extends ServiceProvider
         $val = null;
 
         if ($env_str->contains($key))
-            $val = collect($env_str->explode(PHP_EOL))->filter(fn($val) => str(str($val)->explode('=')[0])->trim()->toString() === $key)->first();
+            $val = collect($env_str->replace("\r", PHP_EOL)->replace("\n", PHP_EOL)->explode(PHP_EOL))->filter(fn($val) => str(str($val)->explode('=')[0])->trim()->toString() === $key)->first();
 
         if ($val)
             return str($val)->trim()->after('=')->trim()->toString();
