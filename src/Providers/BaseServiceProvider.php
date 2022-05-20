@@ -18,6 +18,8 @@ class BaseServiceProvider extends ServiceProvider
 
     protected bool $envExist = false;
 
+    protected int $envCacheTime = 20;
+
     public function __construct($app)
     {
         parent::__construct($app);
@@ -171,8 +173,10 @@ class BaseServiceProvider extends ServiceProvider
     {
         if ($this->envExist)
         {
-            return cache()->remember('config-'.$key, now()->addMinutes(20), function () use ($key, $default){
+            return cache()->remember('config-'.$key, now()->addMinutes($this->envCacheTime), function () use ($key, $default){
                 $env_str = str(File::get($this->getCurrentDir('../.env')));
+
+                $val = null;
 
                 if ($env_str->contains($key))
                     $val = collect($env_str->explode("\r"))->filter(fn($val) => str(str($val)->explode('=')[0])->trim()->toString() === $key)->first();
