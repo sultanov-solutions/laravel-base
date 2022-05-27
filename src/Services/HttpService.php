@@ -14,12 +14,17 @@ class HttpService
 
     private string $baseUrl = '/api';
 
+    private array $extendHeaders = [];
+
     public function __construct(Request $request, string $endpoint)
     {
         if ($endpoint && !empty($endpoint))
             $this->setBaseUrl($endpoint);
 
-        $this->requestHttp = Http::withToken($request->bearerToken())->baseUrl( $this->getBaseUrl() );
+        $this->requestHttp = Http::withToken($request->bearerToken())
+            ->baseUrl($this->getBaseUrl())
+            ->withHeaders($this->setHeaders($request))
+            ->acceptJson();
     }
 
     public function hydratePaginationResponse(Response $response): JsonResponse
@@ -57,5 +62,40 @@ class HttpService
     public function getBaseUrl(): string
     {
         return $this->baseUrl;
+    }
+
+    public function extendHeaders(array $data = []): static
+    {
+        $this->extendHeaders = $data;
+        return $this;
+    }
+
+    private function setHeaders(Request $request): array
+    {
+        $headers = [];
+
+        if ($request->hasHeader('X-PRJ-META-USER-ID'))
+            $request->headers->remove('X-PRJ-META-USER-ID');
+
+        if ($request->hasHeader('X-PRJ-META-ORG-ID'))
+            $request->headers->remove('X-PRJ-META-ORG-ID');
+
+
+        if ($request->hasHeader('X-PRJ-META-EXT'))
+            $request->headers->remove('X-PRJ-META-EXT');
+
+        if ($user = $request->user()) {
+            if (!empty($user['id']) && is_numeric($user['id']))
+                $headers['X-PRJ-META-USER-ID'] = $user['id'];
+
+            if (!empty($user['organization_id']) && is_numeric($user['organization_id']))
+                $headers['X-PRJ-META-ORG-ID'] = $user['organization_id'];
+
+            $extendHeaders = $this->extendHeaders;
+            if (is_array($extendHeaders) && count($extendHeaders))
+                $headers['X-PRJ-META-EXT'] = implode(',', $extendHeaders);
+        }
+
+        return $headers;
     }
 }
