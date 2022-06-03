@@ -45,12 +45,18 @@ class HttpService
         return $this->jsonResponse($response, $response->status());
     }
 
-    public function jsonResponse(Response $response, $fail_status = 404, $message = 'Page not found'): JsonResponse
+    public function jsonResponse(Response $response, $fail_status = 404, $message = 'Page not found'): JsonResponse|string
     {
-        if ($response->status() === 200)
-            return response()->json($response->json());
+        $responseType = 'json';
 
-        return response()->json(json_decode($response->body()), $fail_status);
+        $responseHeaders = $response->headers();
+        if (isset($responseHeaders['Content-Type']) && collect($responseHeaders['Content-Type'])->filter(fn($ct) => str($ct)->contains('text/html'))->count())
+            $responseType = 'html';
+
+        if ($responseType == 'html')
+            return response($response->body(), $response->status());
+
+        return response()->json($response->json(), $fail_status);
     }
 
     public function setBaseUrl(string $baseUrl): static
