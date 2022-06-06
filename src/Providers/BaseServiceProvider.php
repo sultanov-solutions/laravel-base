@@ -3,7 +3,6 @@
 namespace SultanovSolutions\LaravelBase\Providers;
 
 use Exception;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -45,6 +44,7 @@ class BaseServiceProvider extends ServiceProvider
     public function register()
     {
         $this->loadConfigs();
+        $this->loadViews();
         $this->onRegister();
     }
 
@@ -164,6 +164,23 @@ class BaseServiceProvider extends ServiceProvider
     private function loadSeeders()
     {
         $this->publishFiles('seeders', database_path('seeders'));
+    }
+
+    private function loadViews()
+    {
+        $package_name = null;
+
+        if (file_exists($this->getCurrentDir('../composer.json')))
+        {
+            $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
+            $package_name = explode('/', $composer_json['name'])[1];
+
+            if ($package_name === 'laravel-base')
+                $package_name = null;
+        }
+
+        if ($package_name && is_dir($this->getCurrentDir('Resources' . DS . 'views')))
+            $this->loadViewsFrom($this->getCurrentDir('Resources' . DS . 'views'), $package_name);
     }
 
     /**
