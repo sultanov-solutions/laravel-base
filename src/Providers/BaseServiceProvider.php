@@ -6,18 +6,11 @@ use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use SultanovSolutions\LaravelBase\Traits\ProviderOptions;
 
 class BaseServiceProvider extends ServiceProvider
 {
-    protected ?string $configs_dir = 'Configs';
-
-    protected ?string $routes_dir = 'Routes';
-
-    protected ?string $vendor_dir = '';
-
-    protected bool $envExist = false;
-
-    protected int $envCacheTime = 20;
+    use ProviderOptions;
 
     public function __construct($app)
     {
@@ -29,49 +22,47 @@ class BaseServiceProvider extends ServiceProvider
         $this->custom_construct();
     }
 
+    /**
+     * Children __construct
+     */
     public function custom_construct(): void
     {
     }
 
+    /**
+     * Basic boot method
+     */
     public function boot()
     {
-        $this->loadRoutes();
-        $this->loadMigrations();
-        $this->loadSeeders();
+        if ($this->loadRoutes)
+            $this->loadRoutes();
+
+        if ($this->loadMigrations)
+            $this->loadMigrations();
+
+        if ($this->loadSeeders)
+            $this->loadSeeders();
+
         $this->onBoot();
     }
 
+    /**
+     * Basic register method
+     */
     public function register()
     {
-        $this->loadConfigs();
-        $this->loadViews();
+        if ($this->loadConfigs)
+            $this->loadConfigs();
+
+        if ($this->loadViews)
+            $this->loadViews();
+
         $this->onRegister();
     }
 
-    protected function getCurrentDir(string $dir = null): string
-    {
-        $root_dir = dirname((new \ReflectionClass(get_called_class()))->getFileName());
-
-
-        if ($this->vendor_dir) {
-            if (
-                is_dir(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir)) &&
-                is_file(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . 'composer.json'))
-            ) {
-                $composer_json = json_decode(File::get(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . 'composer.json')), 1);
-                $project_folder = array_pop($composer_json['autoload']['psr-4']);
-
-                if (is_dir(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . $project_folder)))
-                    $root_dir = base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . $project_folder);
-            }
-        }
-
-        if (!$dir)
-            return $root_dir;
-
-        return $root_dir . DIRECTORY_SEPARATOR . $dir;
-    }
-
+    /**
+     * Load Package Routes
+     */
     private function loadRoutes()
     {
         $ROUTES_DIR = $this->getCurrentDir('/' . $this->routes_dir);
@@ -95,6 +86,9 @@ class BaseServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Load Package Configs
+     */
     private function loadConfigs()
     {
         if (is_dir($this->getCurrentDir($this->configs_dir))) {
@@ -104,6 +98,103 @@ class BaseServiceProvider extends ServiceProvider
 
             foreach ($config_files as $config_file)
                 $this->loadConfigPath($config_file);
+        }
+    }
+
+    /**
+     * Load Package Migrations
+     */
+    private function loadMigrations()
+    {
+        $this->publishFiles('migrations', database_path('migrations'));
+    }
+
+    /**
+     * Load Package Seeders
+     */
+    private function loadSeeders()
+    {
+        $this->publishFiles('seeders', database_path('seeders'));
+    }
+
+    /**
+     * Load Package Views
+     */
+    private function loadViews()
+    {
+        $package_name = null;
+
+        if (file_exists($this->getCurrentDir('../composer.json')))
+        {
+            $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
+            $package_name = explode('/', $composer_json['name'])[1];
+
+            if ($package_name === 'laravel-base')
+                $package_name = null;
+        }
+
+        if ($package_name && is_dir($this->getCurrentDir('Resources' . DIRECTORY_SEPARATOR . 'views')))
+            $this->loadViewsFrom($this->getCurrentDir('Resources' . DIRECTORY_SEPARATOR . 'views'), $package_name);
+    }
+
+    ###########
+    # Helpers #
+    ###########
+    /**
+     * Using .env of package
+     * @throws Exception
+     */
+    public function env($key, $default = null): ?string
+    {
+        if ($this->envExist)
+        {
+            if ($this->envCacheTime !== 0){
+                return cache()->remember('config-'.$key, now()->addMinutes($this->envCacheTime), function () use ($key, $default){
+                    return $this->getEnvValue($key, $default);
+                });
+            }else{
+                return $this->getEnvValue($key, $default);
+            }
+        }
+
+        return null;
+    }
+
+    ###########
+    # Hooks   #
+    ###########
+    /**
+     * When all bootable method will done call onBoot
+     */
+    public function onBoot(): void
+    {
+    }
+
+    /**
+     * When all registerable method will done call onRegister
+     */
+    public function onRegister(): void
+    {
+    }
+
+    ############
+    # Handlers #
+    ############
+    private function publishFiles(string $path, string $target_dir){
+        if ($path){
+            $path_key = str($path)->replace('/', '-')->slug();
+
+            $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
+            $package_name = str($composer_json['name'])->replace('/', '-')->slug()->toString();
+
+            if ($this->app->runningInConsole()) {
+                if (is_dir($this->getCurrentDir('Database/' . $path))){
+                    $migrationsFiles = collect(scandir($this->getCurrentDir('Database/' . $path)))->filter(fn($f) => !in_array($f, ['.', '..']))->toArray();
+
+                    if (is_array($migrationsFiles) && count($migrationsFiles) )
+                        $this->publishes([$this->getCurrentDir('Database/' . $path) => $target_dir], $package_name . '-' . $path_key);
+                }
+            }
         }
     }
 
@@ -137,72 +228,6 @@ class BaseServiceProvider extends ServiceProvider
         }
     }
 
-    private function publishFiles(string $path, string $target_dir){
-        if ($path){
-            $path_key = str($path)->replace('/', '-')->slug();
-
-            $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
-            $package_name = str($composer_json['name'])->replace('/', '-')->slug()->toString();
-
-            if ($this->app->runningInConsole()) {
-                if (is_dir($this->getCurrentDir('Database/' . $path))){
-                    $migrationsFiles = collect(scandir($this->getCurrentDir('Database/' . $path)))->filter(fn($f) => !in_array($f, ['.', '..']))->toArray();
-
-                    if (is_array($migrationsFiles) && count($migrationsFiles) )
-                        $this->publishes([$this->getCurrentDir('Database/' . $path) => $target_dir], $package_name . '-' . $path_key);
-                }
-            }
-        }
-
-    }
-
-    private function loadMigrations()
-    {
-        $this->publishFiles('migrations', database_path('migrations'));
-    }
-
-    private function loadSeeders()
-    {
-        $this->publishFiles('seeders', database_path('seeders'));
-    }
-
-    private function loadViews()
-    {
-        $package_name = null;
-
-        if (file_exists($this->getCurrentDir('../composer.json')))
-        {
-            $composer_json = json_decode(File::get($this->getCurrentDir('../composer.json')), 1);
-            $package_name = explode('/', $composer_json['name'])[1];
-
-            if ($package_name === 'laravel-base')
-                $package_name = null;
-        }
-
-        if ($package_name && is_dir($this->getCurrentDir('Resources' . DS . 'views')))
-            $this->loadViewsFrom($this->getCurrentDir('Resources' . DS . 'views'), $package_name);
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function env($key, $default = null): ?string
-    {
-        if ($this->envExist)
-        {
-            if ($this->envCacheTime !== 0){
-                return cache()->remember('config-'.$key, now()->addMinutes($this->envCacheTime), function () use ($key, $default){
-                    return $this->getEnvValue($key, $default);
-                });
-            }else{
-                return $this->getEnvValue($key, $default);
-            }
-
-        }
-
-        return null;
-    }
-
     private function getEnvValue($key, $default = null): ?string
     {
         $env_str = str(File::get($this->getCurrentDir('../.env')));
@@ -218,11 +243,26 @@ class BaseServiceProvider extends ServiceProvider
         return $default;
     }
 
-    public function onBoot(): void
+    protected function getCurrentDir(string $dir = null): string
     {
-    }
+        $root_dir = dirname((new \ReflectionClass(get_called_class()))->getFileName());
 
-    public function onRegister(): void
-    {
+        if ($this->vendor_dir) {
+            if (
+                is_dir(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir)) &&
+                is_file(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . 'composer.json'))
+            ) {
+                $composer_json = json_decode(File::get(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . 'composer.json')), 1);
+                $project_folder = array_pop($composer_json['autoload']['psr-4']);
+
+                if (is_dir(base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . $project_folder)))
+                    $root_dir = base_path('vendor' . DIRECTORY_SEPARATOR . $this->vendor_dir . DIRECTORY_SEPARATOR . $project_folder);
+            }
+        }
+
+        if (!$dir)
+            return $root_dir;
+
+        return $root_dir . DIRECTORY_SEPARATOR . $dir;
     }
 }
