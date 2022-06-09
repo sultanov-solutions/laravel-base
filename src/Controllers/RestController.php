@@ -52,9 +52,9 @@ abstract class RestController extends LaravelBaseController
     ##############################
     /**
      * Main get all interface
-     * @return JsonResponse
+     * @return JsonResponse|string
      */
-    public function all(): JsonResponse
+    public function all(): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->get($this->scope . '/all');
 
@@ -64,7 +64,7 @@ abstract class RestController extends LaravelBaseController
         );
     }
 
-    public function remoteSearch(string $query): JsonResponse
+    public function remoteSearch(string $query): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->get( $this->scope . '/remote-search/' . $query );
 
@@ -75,7 +75,7 @@ abstract class RestController extends LaravelBaseController
     }
 
 
-    public function findBy(Request $request): JsonResponse
+    public function findBy(Request $request): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->get( $this->scope . '/findBy/', $request->query->all() );
 
@@ -88,9 +88,9 @@ abstract class RestController extends LaravelBaseController
     /**
      * Main paginated list interface
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|string
      */
-    public function list(Request $request): JsonResponse
+    public function list(Request $request): JsonResponse|string
     {
         $requestResponse = $this->httpService->requestHttp->get($this->scope, $request->query->all());
         return $this->httpService->hydratePaginationResponse($requestResponse);
@@ -99,9 +99,9 @@ abstract class RestController extends LaravelBaseController
     /**
      * Main read interface
      * @param $id
-     * @return JsonResponse
+     * @return JsonResponse|string
      */
-    public function read($id): JsonResponse
+    public function read($id): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->get($this->scope . '/' . $id);
 
@@ -114,9 +114,9 @@ abstract class RestController extends LaravelBaseController
     /**
      * Main create interface
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|string
      */
-    public function create(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->post($this->scope, $request);
 
@@ -129,9 +129,9 @@ abstract class RestController extends LaravelBaseController
     /**
      * Main update interface
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|string
      */
-    public function update(Request $request): JsonResponse
+    public function update(Request $request): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->put($this->scope, $request);
 
@@ -145,9 +145,9 @@ abstract class RestController extends LaravelBaseController
     /**
      * Main destroy interface
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|string
      */
-    public function destroy(Request $request): JsonResponse
+    public function destroy(Request $request): JsonResponse|string
     {
         $response = $this->httpService->requestHttp->delete($this->scope, $request);
 
