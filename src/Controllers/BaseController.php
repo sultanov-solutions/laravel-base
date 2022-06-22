@@ -2,6 +2,7 @@
 
 namespace SultanovSolutions\LaravelBase\Controllers;
 
+use SultanovSolutions\LaravelBase\Exceptions\JsonException;
 use SultanovSolutions\LaravelBase\Services\BaseQueryFilter;
 use SultanovSolutions\LaravelBase\Traits\Hooks;
 use Illuminate\Http\JsonResponse;
@@ -80,6 +81,7 @@ abstract class BaseController extends LaravelBaseController
 
     /**
      * Default Get All interface
+     * @param Request $request
      * @return JsonResponse
      */
     public function all(Request $request): JsonResponse
@@ -92,6 +94,9 @@ abstract class BaseController extends LaravelBaseController
         return response()->json($this->model::all()->pluck('name', 'id'));
     }
 
+    /**
+     * @throws JsonException
+     */
     public function remoteSearch(string $query): JsonResponse
     {
         if ($query)
@@ -99,10 +104,13 @@ abstract class BaseController extends LaravelBaseController
                 $this->model::where($this->remoteSearchKey, 'like', '%' . $query . '%')->pluck('name', 'id')
             );
 
-        return response()->json(['status' => false], ResponseAlias::HTTP_BAD_REQUEST);
+        throw new JsonException('Query not set', ResponseAlias::HTTP_BAD_REQUEST);
     }
 
 
+    /**
+     * @throws JsonException
+     */
     public function findBy(Request $request): JsonResponse
     {
         $builder = $this->model::query();
@@ -131,14 +139,14 @@ abstract class BaseController extends LaravelBaseController
             );
         }
 
-
-        return response()->json(['status' => false], ResponseAlias::HTTP_BAD_REQUEST);
+        throw new JsonException('Not found', ResponseAlias::HTTP_BAD_REQUEST);
     }
 
     /**
      * Default Create item interface
      * @param Request $request
      * @return JsonResponse
+     * @throws JsonException
      */
     public function create(Request $request): JsonResponse
     {
@@ -163,12 +171,10 @@ abstract class BaseController extends LaravelBaseController
         } catch (\Exception $exception) {
             if (str($exception->getMessage())->contains('Duplicate entry'))
                 return response()->json(['status' => false, 'message' => 'Duplicate entry'], ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
-		}
 
-        if (!$item) {
             event('item-not-created.' . $this->scope, [$data]);
 
-            return response()->json(['status' => false], ResponseAlias::HTTP_BAD_REQUEST);
+            throw new JsonException("Item [$this->scope] not created", ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         // Apply updates after item created(Created relations, files, etc..)
@@ -184,6 +190,7 @@ abstract class BaseController extends LaravelBaseController
      * @param Request $request
      * @param $id
      * @return JsonResponse
+     * @throws JsonException
      */
     public function read(Request $request, $id): JsonResponse
     {
@@ -195,7 +202,7 @@ abstract class BaseController extends LaravelBaseController
         if (!$item) {
             event('item-not-found.' . $this->scope, [$modified_id]);
 
-            return response()->json('Not found', ResponseAlias::HTTP_NOT_FOUND);
+            throw new JsonException("Item [$this->scope] not found", ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         $item = $this->afterReadHook($item);
@@ -207,6 +214,7 @@ abstract class BaseController extends LaravelBaseController
      * Default Update Single item interface
      * @param Request $request
      * @return JsonResponse
+     * @throws JsonException
      */
     public function update(Request $request): JsonResponse
     {
@@ -226,7 +234,8 @@ abstract class BaseController extends LaravelBaseController
 
         if (!$item) {
             event('item-not-updated.' . $this->scope, [$data]);
-            return response()->json('Not found', ResponseAlias::HTTP_NOT_FOUND);
+
+            throw new JsonException("Item [$this->scope] not updated", ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         event('updating.' . $this->scope, [$item, $data]);
