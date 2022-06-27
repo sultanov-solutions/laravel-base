@@ -265,4 +265,26 @@ class BaseServiceProvider extends ServiceProvider
 
         return $root_dir . DIRECTORY_SEPARATOR . $dir;
     }
+
+    /**
+     * @throws Exception
+     */
+    protected function setConnectionData($connectionName)
+    {
+        $connectionName = str($connectionName)->upper()->toString();
+
+        $connection = $this->env($connectionName . '_DB_CONNECTION_NAME');
+
+        if (empty(trim($connection)))
+            throw new Exception('Ooops! Connection failed' . $connectionName);
+
+        $mysqlConnection = config('database.connections.mysql');
+        $mysqlConnection['host'] = $this->env($connectionName . '_DB_HOST');
+        $mysqlConnection['port'] = $this->env($connectionName . '_DB_PORT');
+        $mysqlConnection['database'] = $this->env($connectionName . '_DB_DATABASE');
+        $mysqlConnection['username'] = $this->env($connectionName . '_DB_USERNAME');
+        $mysqlConnection['password'] = $this->env($connectionName . '_DB_PASSWORD');
+
+        config()->set('database.connections.' . $this->env($connectionName . '_DB_CONNECTION_NAME'), $mysqlConnection );
+    }
 }
