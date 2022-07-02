@@ -146,6 +146,9 @@ class BaseServiceProvider extends ServiceProvider
      */
     public function env($key, $default = null): ?string
     {
+        if (!env($key) || !empty(env($key)))
+            return env($key);
+
         if ($this->envExist)
         {
             if ($this->envCacheTime !== 0){
