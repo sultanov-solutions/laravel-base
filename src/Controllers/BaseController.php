@@ -76,7 +76,7 @@ abstract class BaseController extends LaravelBaseController
 
         if ($request->perPage === 0)
             return response()->json($builder->get());
-            
+
         return response()->json(
             $builder->paginate($request->perPage ?? $this->perPage)
         );
