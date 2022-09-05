@@ -92,8 +92,11 @@ abstract class RestController extends LaravelBaseController
      */
     public function list(Request $request): JsonResponse|string
     {
-        $requestResponse = $this->httpService->requestHttp->get($this->scope, $request->query->all());
-        return $this->httpService->hydratePaginationResponse($requestResponse);
+        $response = $this->httpService->requestHttp->get($this->scope, $request->query->all());
+        return $this->httpService->jsonResponse(
+            $response,
+            $response->status()
+        );
     }
 
     /**
