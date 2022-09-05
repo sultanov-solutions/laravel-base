@@ -74,7 +74,7 @@ abstract class BaseController extends LaravelBaseController
         // Inject Builder Modifications
         $builder = $this->afterListHook($builder, $injectedRequest, $request);
 
-        if ($request->perPage === 0)
+        if ($request->perPage === -1 || $request->perPage === '-1')
             return response()->json($builder->get());
 
         return response()->json(
