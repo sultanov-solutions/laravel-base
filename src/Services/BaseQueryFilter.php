@@ -51,7 +51,7 @@ class BaseQueryFilter
         return $data;
     }
 
-    private function orderByQuery(): static
+    protected function orderByQuery(): static
     {
         if ($this->request->has('orderDir') && $this->request->has('orderBy'))
             $this->builder = $this->model->orderBy($this->request->get('orderBy'), $this->request->get('orderDir'));
@@ -59,7 +59,7 @@ class BaseQueryFilter
         return $this;
     }
 
-    private function filterQuery(): static
+    protected function filterQuery(): static
     {
         if ($this->request->has('filter')) {
             $filterData = $this->request->filter;
@@ -78,7 +78,7 @@ class BaseQueryFilter
         return $this;
     }
 
-    private function searchQuery(): static
+    protected function searchQuery(): static
     {
         if ($this->request->has('s')) {
             foreach (collect($this->model->getFillable())->filter(fn($i) => $i !== 'password')->toArray() as $field)
