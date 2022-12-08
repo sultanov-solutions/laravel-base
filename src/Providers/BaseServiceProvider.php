@@ -3,6 +3,7 @@
 namespace SultanovSolutions\LaravelBase\Providers;
 
 use Exception;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -42,6 +43,8 @@ class BaseServiceProvider extends ServiceProvider
 
         if ($this->loadSeeders)
             $this->loadSeeders();
+
+        $this->loadEnvOptions();
 
         $this->onBoot();
     }
@@ -115,6 +118,27 @@ class BaseServiceProvider extends ServiceProvider
     private function loadSeeders()
     {
         $this->publishFiles('seeders', database_path('seeders'));
+    }
+
+    /**
+     * Set default env
+     */
+    private function loadEnvOptions()
+    {
+        $envFile = '.env';
+        if (File::exists($this->getCurrentDir('../' . $envFile))){
+            $env = File::get($this->getCurrentDir('../' . $envFile));
+            if (!empty(trim($env)))
+            {
+                foreach (explode("\n", $env) as $line)
+                {
+                    $key = str($line)->before('=')->trim()->toString();
+                    $value = str($line)->after('=')->trim()->toString();
+                    if ($key)
+                        Env::getRepository()->set($key, $value);
+                }
+            }
+        }
     }
 
     /**
